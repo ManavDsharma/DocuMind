@@ -19,7 +19,7 @@ services:
       POSTGRES_PASSWORD: documind_dev_pw
       POSTGRES_DB: documind
     ports:
-      - "5432:5432"
+      - "5433:5432" # host:container — 5433 avoids the native Postgres on 5432
     volumes:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped

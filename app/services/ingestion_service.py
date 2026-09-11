@@ -6,6 +6,7 @@ from app.ingestion.chunker import RecursiveCharacterChunker
 from app.ingestion.embedders.base import BaseEmbedder
 from app.ingestion.parsers.base import BasePDFParser
 from app.ingestion.schemas import DocumentChunk, EmbeddedChunk
+from app.db.postgres_repository import PostgresChunkRepository
 
 logger = logging.getLogger(__name__)
 
@@ -24,11 +25,13 @@ class IngestionService:
         chunker: RecursiveCharacterChunker,
         embedder: BaseEmbedder,
         repository: QdrantRepository,
+        postgres_repository: PostgresChunkRepository,
     ) -> None:
         self._parser = parser
         self._chunker = chunker
         self._embedder = embedder
         self._repository = repository
+        self._postgres_repository = postgres_repository
 
     async def ingest_pdf(self, file_path: Path, document_id: str) -> dict:
         document_name = file_path.name
@@ -58,6 +61,8 @@ class IngestionService:
 
         self._repository.ensure_collection()
         stored_count = self._repository.upsert_chunks(embedded_chunks)
+        self._postgres_repository.ensure_schema()
+        self._postgres_repository.insert_chunks(chunks)
 
         return {
             "document_id": document_id,
